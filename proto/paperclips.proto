@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+option go_package = "github.com/JonasAlfredsson/go-grpc-minimal-server/proto";
+
+message Size {
+  int32 paperclips = 1;
+}
+
+message Paperclips {
+  int32 paperclips = 1;
+}
+
+message Empty {}
+
+// PaperclipCounter service keeps track of the total amount of paperclips.
+// NOTE: If any response is one of the type's default values (e.g. 0 or empty
+// string) nothing will be transmitted, and it might look a bit weird on the
+// client's side if you print to stdout.
+service PaperclipCounter {
+  rpc GetPaperclips(Empty) returns (Paperclips);
+  rpc IncrementPaperclips(Size) returns (Empty);
+}
