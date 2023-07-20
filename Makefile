@@ -44,3 +44,9 @@ docker-build-compile-helper:
 		--user $(shell id -u):$(shell id -g) \
 		grpc-proto-compile-helper \
 		protoc --go_out=. --go_opt=paths=source_relative $< --go-grpc_out=. --go-grpc_opt=paths=source_relative $<
+
+.PHONY: docker-build
+docker-build: build
+	docker build . -f Dockerfile \
+		--target=grpc-minimal-server \
+		-t grpc-minimal-server
