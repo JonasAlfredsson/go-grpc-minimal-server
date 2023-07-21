@@ -143,6 +143,49 @@ docker run -it --network=host --rm fullstorydev/grpcurl:latest \
 }
 ```
 
+### Note About `-plaintext`
+The gRPC protocol use HTTP2 as its transport medium, and while there is nothing
+[forbidding][7] HTTP2 from using unencrypted connections it is absolutely very
+rare to see it. The unencrypted solution is called HTTP2 Over Cleartext, usually
+shortened to `h2c`, and this might not be supported by all clients.
+
+In our case we have implemented the bare minimum on the server, so it only
+speaks cleartext, which is why we need to add the `-plaintext` flag when using
+the `grpcurl` client. However, this might cause issues for you if you are
+trying to place this minimal server behind a reverse proxy that terminates TLS
+connections and just forwards the plaintext result afterwards.
+
+In Nginx you can do something [like this][8] to support both cases:
+
+```conf
+http {
+    server {
+        listen 80 http2;
+        listen 443 ssl http2;
+        location / {
+            grpc_pass grpc://localhost:9000;
+        }
+    }
+}
+```
+
+while Caddy use the not-officially-supported [h2c][9] package to achieve the
+same thing:
+
+```conf
+{
+    servers {
+        protocols h1 h2c h2
+    }
+}
+http://example.com {
+    reverse_proxy h2c://localhost:9000
+}
+example.com {
+    reverse_proxy h2c://localhost:9000
+}
+```
+
 
 
 
@@ -154,3 +197,6 @@ docker run -it --network=host --rm fullstorydev/grpcurl:latest \
 [4]: https://curl.se/
 [5]: https://github.com/fullstorydev/grpcurl
 [6]: https://github.com/fullstorydev/grpcurl#installation
+[7]: https://daniel.haxx.se/blog/2015/03/06/tls-in-http2/
+[8]: https://www.nginx.com/blog/nginx-1-13-10-grpc/
+[9]: https://pkg.go.dev/golang.org/x/net/http2/h2c
